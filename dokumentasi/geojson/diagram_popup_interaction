@@ -1,0 +1,117 @@
+┌────────────────────────────────────────────────────────────────┐
+│              POPUP INTERACTION FLOW                            │
+└────────────────────────────────────────────────────────────────┘
+
+   Layer sudah di peta
+        │
+        ▼
+   ┌──────────────────────┐
+   │ User melihat peta    │
+   └──────────┬───────────┘
+              │
+              ▼
+   ┌──────────────────────┐
+   │ User click pada      │
+   │ feature              │
+   └──────────┬───────────┘
+              │
+              ▼
+   ┌──────────────────────┐
+   │ Leaflet detect       │
+   │ click event          │
+   └──────────┬───────────┘
+              │
+              ▼
+   ┌──────────────────────┐
+   │ Cek: apakah layer    │
+   │ punya popup?         │
+   └──────────┬───────────┘
+              │
+        ┌─────┴─────┐
+        │           │
+        ▼ YA        ▼ TIDAK
+   ┌─────────┐  ┌──────────┐
+   │ Lanjut  │  │ Tidak ada│
+   │         │  │ reaksi   │
+   └────┬────┘  └──────────┘
+        │
+        ▼
+   ┌──────────────────────┐
+   │ Ambil popup content  │
+   │ yang sudah di-bind   │
+   │ dengan bindPopup()   │
+   └──────────┬───────────┘
+              │
+              ▼
+   ┌──────────────────────┐
+   │ Popup content adalah │
+   │ HTML string yang     │
+   │ dibuat dari:         │
+   │                      │
+   │ feature.properties   │
+   └──────────┬───────────┘
+              │
+              ▼
+   ┌──────────────────────┐
+   │ Contoh:              │
+   │                      │
+   │ var content =        │
+   │   '<h3>' +           │
+   │   props.nama +       │
+   │   '</h3>';           │
+   └──────────┬───────────┘
+              │
+              ▼
+   ┌──────────────────────┐
+   │ Leaflet create       │
+   │ popup element        │
+   │ (DOM element)        │
+   └──────────┬───────────┘
+              │
+              ▼
+   ┌──────────────────────┐
+   │ Insert HTML content  │
+   │ ke dalam popup       │
+   └──────────┬───────────┘
+              │
+              ▼
+   ┌──────────────────────┐
+   │ Calculate position   │
+   │ popup di peta        │
+   │ (relative to feature)│
+   └──────────┬───────────┘
+              │
+              ▼
+   ┌──────────────────────┐
+   │ Show popup dengan    │
+   │ animasi              │
+   └──────────┬───────────┘
+              │
+              ▼
+   ┌──────────────────────┐
+   │ POPUP VISIBLE        │
+   │                      │
+   │ User bisa:           │
+   │ • Baca info          │
+   │ • Scroll jika panjang│
+   │ • Click link (jika   │
+   │   ada)               │
+   └──────────┬───────────┘
+              │
+              ▼
+   ┌──────────────────────┐
+   │ User click X atau    │
+   │ click di luar popup  │
+   └──────────┬───────────┘
+              │
+              ▼
+   ┌──────────────────────┐
+   │ Close popup dengan   │
+   │ animasi              │
+   └──────────┬───────────┘
+              │
+              ▼
+   ┌──────────────────────┐
+   │ Remove popup dari    │
+   │ DOM                  │
+   └──────────────────────┘

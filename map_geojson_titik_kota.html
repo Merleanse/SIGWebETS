@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kabupaten/Kota DIY</title>
+    
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: Arial, sans-serif;
+        }
+        #map {
+            width: 100%;
+            height: 100vh;
+        }
+        .popup-kabkota {
+            min-width: 250px;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        .popup-kabkota-header {
+            text-align: center;
+            padding: 15px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            margin: -15px -15px 15px -15px;
+            color: white;
+            border-radius: 5px 5px 0 0;
+        }
+        .popup-kabkota-logo {
+            width: 80px;
+            height: 80px;
+            margin: 0 auto 10px;
+            background: white;
+            border-radius: 50%;
+            padding: 10px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        .popup-kabkota-logo img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        }
+        .popup-kabkota h2 {
+            margin: 10px 0 5px 0;
+            font-size: 22px;
+        }
+        .popup-kabkota p {
+            margin: 0;
+            opacity: 0.9;
+            font-size: 14px;
+        }
+        .popup-kabkota-content {
+            padding: 15px 10px;
+        }
+        .koordinat-info {
+            background: #f8f9fa;
+            padding: 10px;
+            border-radius: 5px;
+            margin-top: 10px;
+            font-size: 13px;
+        }
+        .koordinat-info strong {
+            color: #2c3e50;
+        }
+    </style>
+</head>
+<body>
+    <div id="map"></div>
+    
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    
+    <script>
+        // Inisialisasi peta
+        var map = L.map('map').setView([-7.7956, 110.3695], 9);
+
+        // Basemap
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '© OpenStreetMap contributors',
+            maxZoom: 19
+        }).addTo(map);
+
+        // Custom icon untuk kabupaten/kota
+        var kabkotaIcon = L.icon({
+            iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png',
+            shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png',
+            iconSize: [25, 41],
+            iconAnchor: [12, 41],
+            popupAnchor: [1, -34],
+            shadowSize: [41, 41]
+        });
+
+        // Load data titik kabupaten/kota
+        fetch('data/geojson_diy/titik_kabupaten_kota_diy.geojson')
+            .then(response => response.json())
+            .then(data => {
+                L.geoJSON(data, {
+                    pointToLayer: function(feature, latlng) {
+                        // Gunakan custom icon
+                        return L.marker(latlng, {icon: kabkotaIcon});
+                    },
+                    onEachFeature: function(feature, layer) {
+                        var props = feature.properties;
+                        
+                        // Path ke logo
+                        var logoPath = 'assets/logo/' + props.LOGO;
+                        
+                        // Buat popup dengan logo
+                        var popupContent = 
+                            '<div class="popup-kabkota">' +
+                            '<div class="popup-kabkota-header">' +
+                            '<div class="popup-kabkota-logo">' +
+                            '<img src="' + logoPath + '" alt="Logo ' + props.KAB_KOTA + '" ' +
+                            'onerror="this.src=\'https://via.placeholder.com/80?text=Logo\'">' +
+                            '</div>' +
+                            '<h2>' + props.KAB_KOTA + '</h2>' +
+                            '<p>' + props.PROVINSI + '</p>' +
+                            '</div>' +
+                            '<div class="popup-kabkota-content">' +
+                            '<div class="koordinat-info">' +
+                            '<strong>📍 Koordinat:</strong><br>' +
+                            'Latitude: ' + props.Y.toFixed(6) + '°<br>' +
+                            'Longitude: ' + props.X.toFixed(6) + '°' +
+                            '</div>' +
+                            '</div>' +
+                            '</div>';
+                        
+                        layer.bindPopup(popupContent, {
+                            maxWidth: 300,
+                            className: 'custom-popup'
+                        });
+                        
+                        // Tooltip dengan nama kabupaten/kota
+                        layer.bindTooltip(
+                            '<strong>' + props.KAB_KOTA + '</strong>',
+                            {
+                                permanent: false,
+                                direction: 'top',
+                                offset: [0, -35]
+                            }
+                        );
+                        
+                        // Event click untuk zoom
+                        layer.on('click', function(e) {
+                            map.setView(e.latlng, 11);
+                        });
+                    }
+                }).addTo(map);
+            })
+            .catch(error => {
+                console.error('Error loading kabupaten/kota data:', error);
+                alert('Gagal memuat data kabupaten/kota!');
+            });
+    </script>
+</body>
+</html>

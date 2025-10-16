@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Layer Control dengan GeoJSON</title>
+    
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: Arial, sans-serif;
+        }
+        #map {
+            width: 100%;
+            height: 100vh;
+        }
+    </style>
+</head>
+<body>
+    <div id="map"></div>
+    
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    
+    <script>
+        // ============================================
+        // 1. INISIALISASI PETA
+        // ============================================
+        var map = L.map('map').setView([-7.7956, 110.3695], 10);
+
+        // ============================================
+        // 2. BASEMAPS
+        // ============================================
+        var osmLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '© OpenStreetMap contributors'
+        }).addTo(map);  // Tambahkan sebagai default
+
+        var satelliteLayer = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+            attribution: 'Tiles © Esri'
+        });
+
+        // ============================================
+        // 3. DEKLARASI VARIABLE UNTUK GEOJSON LAYERS
+        // ============================================
+        // PENTING: Deklarasi di global scope agar bisa diakses di mana saja
+        var layerJalan;
+        var layerSungai;
+        var layerPenduduk;
+        var layerKabkota;
+
+        // ============================================
+        // 4. FUNGSI UNTUK WARNA (akan dijelaskan nanti)
+        // ============================================
+        function getColorJalan(keterangan) {
+            switch(keterangan) {
+                case 'Jalan Arteri': return '#e74c3c';
+                case 'Jalan Kolektor': return '#f39c12';
+                case 'Jalan Lokal': return '#3498db';
+                default: return '#95a5a6';
+            }
+        }
+
+        function getColorDensity(density) {
+            return density > 3000 ? '#800026' :
+                   density > 2500 ? '#BD0026' :
+                   density > 2000 ? '#E31A1C' :
+                   density > 1500 ? '#FC4E2A' :
+                   density > 1000 ? '#FD8D3C' :
+                   density > 500  ? '#FEB24C' :
+                   density > 200  ? '#FED976' :
+                                    '#FFEDA0';
+        }
+
+        // ============================================
+        // 5. LOAD JALAN
+        // ============================================
+        fetch('data/geojson_diy/jalan_utama_diy.geojson')
+            .then(response => response.json())
+            .then(data => {
+                layerJalan = L.geoJSON(data, {
+                    style: function(feature) {
+                        return {
+                            color: getColorJalan(feature.properties.KETERANGAN),
+                            weight: 3,
+                            opacity: 0.8
+                        };
+                    },
+                    onEachFeature: function(feature, layer) {
+                        var props = feature.properties;
+                        var popup = '<h3>Jalan ' + props.KETERANGAN + '</h3>' +
+                                   '<p>Panjang: ' + props.PANJANG_KM + ' km</p>';
+                        layer.bindPopup(popup);
+                    }
+                });
+                
+                // Tambahkan ke layer control
+                layerControl.addOverlay(layerJalan, '🛣️ Jalan Utama');
+                
+                // Tambahkan ke peta secara default
+                layerJalan.addTo(map);
+            })
+            .catch(error => console.error('Error loading jalan:', error));
+
+        // ============================================
+        // 6. LOAD SUNGAI
+        // ============================================
+        fetch('data/geojson_diy/sungai_besar_diy.geojson')
+            .then(response => response.json())
+            .then(data => {
+                layerSungai = L.geoJSON(data, {
+                    style: {
+                        fillColor: '#3498db',
+                        weight: 2,
+                        color: '#2980b9',
+                        fillOpacity: 0.5
+                    },
+                    onEachFeature: function(feature, layer) {
+                        layer.bindPopup('<h3>💧 Sungai</h3>');
+                    }
+                });
+                
+                layerControl.addOverlay(layerSungai, '💧 Sungai');
+                layerSungai.addTo(map);
+            })
+            .catch(error => console.error('Error loading sungai:', error));
+
+        // ============================================
+        // 7. LOAD PENDUDUK KECAMATAN
+        // ============================================
+        fetch('data/geojson_diy/penduduk_kecamatan_diy.geojson')
+            .then(response => response.json())
+            .then(data => {
+                layerPenduduk = L.geoJSON(data, {
+                    style: function(feature) {
+                        return {
+                            fillColor: getColorDensity(feature.properties.KPDT_PDD),
+                            weight: 2,
+                            opacity: 1,
+                            color: 'white',
+                            fillOpacity: 0.7
+                        };
+                    },
+                    onEachFeature: function(feature, layer) {
+                        var props = feature.properties;
+                        var popup = '<h3>' + props.KECAMATAN + '</h3>' +
+                                   '<p>Penduduk: ' + props.JML_PDD.toLocaleString('id-ID') + ' jiwa</p>' +
+                                   '<p>Kepadatan: ' + props.KPDT_PDD + ' jiwa/km²</p>';
+                        layer.bindPopup(popup);
+                    }
+                });
+                
+                layerControl.addOverlay(layerPenduduk, '👥 Penduduk Kecamatan');
+                // Tidak ditambahkan secara default (user bisa nyalakan sendiri)
+            })
+            .catch(error => console.error('Error loading penduduk:', error));
+
+        // ============================================
+        // 8. LOAD TITIK KABUPATEN/KOTA
+        // ============================================
+        fetch('data/geojson_diy/titik_kabupaten_kota_diy.geojson')
+            .then(response => response.json())
+            .then(data => {
+                layerKabkota = L.geoJSON(data, {
+                    pointToLayer: function(feature, latlng) {
+                        return L.marker(latlng);
+                    },
+                    onEachFeature: function(feature, layer) {
+                        var props = feature.properties;
+                        var popup = '<h3>' + props.KAB_KOTA + '</h3>' +
+                                   '<p>' + props.PROVINSI + '</p>';
+                        layer.bindPopup(popup);
+                    }
+                });
+                
+                layerControl.addOverlay(layerKabkota, '🏛️ Kabupaten/Kota');
+                layerKabkota.addTo(map);
+            })
+            .catch(error => console.error('Error loading kabkota:', error));
+
+        // ============================================
+        // 9. LAYER CONTROL
+        // ============================================
+        var baseMaps = {
+            "OpenStreetMap": osmLayer,
+            "Satellite": satelliteLayer
+        };
+
+        var overlayMaps = {};  // Akan diisi saat load GeoJSON
+
+        var layerControl = L.control.layers(baseMaps, overlayMaps, {
+            position: 'topright',
+            collapsed: false
+        }).addTo(map);
+
+        // ============================================
+        // 10. SCALE CONTROL
+        // ============================================
+        L.control.scale({
+            position: 'bottomleft',
+            imperial: false  // Hanya metric (km), tanpa imperial (miles)
+        }).addTo(map);
+
+    </script>
+</body>
+</html>

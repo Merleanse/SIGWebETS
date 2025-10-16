@@ -1,0 +1,53 @@
+┌────────────────────────────────────────────────────────────────┐
+│              PROSES FETCH GEOJSON (DETAIL)                     │
+└────────────────────────────────────────────────────────────────┘
+
+   START FETCH
+        │
+        ▼
+   ┌──────────────────────────┐
+   │ fetch('data/file.json')  │
+   │                          │
+   │ Browser mengirim HTTP    │
+   │ request ke server        │
+   └────────────┬─────────────┘
+                │
+                ▼
+           ┌─────────┐
+           │ Server  │ ───┐ File tidak ditemukan (404)
+           │ Response│    │
+           └────┬────┘    │
+                │ OK      │
+                ▼         ▼
+          ┌──────────┐  ┌──────────────┐
+          │ Response │  │ ERROR        │
+          │ Object   │  │ .catch()     │
+          └────┬─────┘  │ dieksekusi   │
+               │        └──────────────┘
+               ▼
+   ┌─────────────────────────┐
+   │ .then(response => ...)  │
+   │                         │
+   │ Terima response object  │
+   └────────────┬────────────┘
+                │
+                ▼
+   ┌─────────────────────────┐
+   │ response.json()         │
+   │                         │
+   │ Parse string JSON       │
+   │ menjadi Object JS       │
+   └────────────┬────────────┘
+                │
+                ▼
+   ┌─────────────────────────┐
+   │ .then(data => ...)      │
+   │                         │
+   │ Data berupa Object JS   │
+   │ siap digunakan          │
+   └────────────┬────────────┘
+                │
+                ▼
+        Data GeoJSON siap
+        diproses oleh
+        L.geoJSON()

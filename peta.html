@@ -1,0 +1,73 @@
+<html>
+  <head>
+    <title>Dasar Leaflet</title>
+    <link
+      rel="stylesheet"
+      href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+      integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+      crossorigin=""
+    />
+
+    <style>
+      #map {
+        height: 100vh;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="map"></div>
+
+    <!-- Make sure you put this AFTER Leaflet's CSS -->
+    <script
+      src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+      integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+      crossorigin=""
+    ></script>
+
+    <script>
+      var map = L.map("map").setView([-7.799333634363571,110.37554219432286], 15);
+
+      L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+        maxZoom: 19,
+        attribution:
+          '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+      }).addTo(map);
+
+      var polygon = L.polygon([
+        [51.509, -0.08],
+        [51.503, -0.06],
+        [51.51, -0.047],
+      ]).addTo(map);
+
+      //menambahkan geojson
+      fetch("/assets/geojson_diy/jalan_utama_diy.geojson") // Load the GeoJSON file
+        .then((response) => response.json()) // Convert response to JSON
+        .then((data) => {
+          // Add GeoJSON layer to the map
+          L.geoJSON(data, {
+            pointToLayer: function (feature, latlng) {
+              return L.circleMarker(latlng, {}).bindPopup(
+                "<b>" + feature.properties.KETERANGAN + "</b>"
+              ); // Display name in popup
+            },
+          }).addTo(map);
+        })
+        .catch((error) => console.error("Error loading GeoJSON:", error)); // Handle errors
+
+        //menambahkan geojson
+      fetch("/assets/geojson_diy/penduduk_kecamatan_diy.geojson") // Load the GeoJSON file
+        .then((response) => response.json()) // Convert response to JSON
+        .then((data) => {
+          // Add GeoJSON layer to the map
+          L.geoJSON(data, {
+            pointToLayer: function (feature, latlng) {
+              return L.circleMarker(latlng, {}).bindPopup(
+                "<b>" + feature.properties.KECAMATAN + "</b>"
+              ); // Display name in popup
+            },
+          }).addTo(map);
+        })
+        .catch((error) => console.error("Error loading GeoJSON:", error)); // Handle errors
+    </script>
+  </body>
+</html>

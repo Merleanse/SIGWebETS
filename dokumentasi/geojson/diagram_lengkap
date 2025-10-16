@@ -1,0 +1,152 @@
+┌────────────────────────────────────────────────────────────────────────────┐
+│                    COMPLETE FLOW: FILE TO POPUP                            │
+└────────────────────────────────────────────────────────────────────────────┘
+
+┌─────────────────┐
+│  FILE GEOJSON   │
+│  di server/disk │
+│                 │
+│  {              │
+│   "type": "...", │
+│   "features": [ │
+│     {           │
+│       "geometry"│
+│       "properti"│
+│     }           │
+│   ]             │
+│  }              │
+└────────┬────────┘
+         │
+         │ 1. HTTP REQUEST
+         ▼
+┌─────────────────┐
+│  FETCH API      │────┐
+│                 │    │ Error (Network, 404, etc)
+│  fetch('...')   │    │
+└────────┬────────┘    │
+         │ OK          ▼
+         │      ┌──────────────┐
+         │      │ .catch()     │
+         │      │ Error handler│
+         │      └──────────────┘
+         │
+         │ 2. RESPONSE
+         ▼
+┌─────────────────┐
+│ Response Object │
+│                 │
+│ - status: 200   │
+│ - headers       │
+│ - body (JSON)   │
+└────────┬────────┘
+         │
+         │ 3. PARSE JSON
+         ▼
+┌─────────────────┐
+│ response.json() │
+│                 │
+│ Convert string  │
+│ to JS Object    │
+└────────┬────────┘
+         │
+         │ 4. DATA READY
+         ▼
+┌─────────────────┐
+│ JavaScript      │
+│ Object          │
+│                 │
+│ data = {        │
+│   type: "...",  │
+│   features: [..] │
+│ }               │
+└────────┬────────┘
+         │
+         │ 5. PROCESS
+         ▼
+┌─────────────────────────────────────┐
+│ L.geoJSON(data, {                   │
+│                                     │
+│   // 6. STYLING                     │
+│   style: function(feature) {        │
+│     return {                        │
+│       color: '...',                 │
+│       weight: ...                   │
+│     };                              │
+│   },                                │
+│                                     │
+│   // 7. BIND INTERACTIONS           │
+│   onEachFeature: function(feat, lyr)│
+│     var props = feat.properties;    │
+│                                     │
+│     // 8. CREATE POPUP CONTENT      │
+│     var popup = '<div>...' +        │
+│                 props.nama +        │
+│                 '...</div>';        │
+│                                     │
+│     // 9. BIND POPUP TO LAYER       │
+│     lyr.bindPopup(popup);           │
+│                                     │
+│     // 10. BIND TOOLTIP             │
+│     lyr.bindTooltip(props.nama);    │
+│                                     │
+│     // 11. EVENT HANDLERS           │
+│     lyr.on('mouseover', ...);       │
+│     lyr.on('mouseout', ...);        │
+│   }                                 │
+│ })                                  │
+└────────────┬────────────────────────┘
+             │
+             │ 12. ADD TO MAP
+             ▼
+      ┌──────────────┐
+      │  .addTo(map) │
+      └──────┬───────┘
+             │
+             │ 13. RENDER
+             ▼
+      ┌──────────────┐
+      │  PETA LEAFLET│
+      │              │
+      │  [Layer      │
+      │   ditampilkan│
+      │   dengan     │
+      │   styling]   │
+      └──────┬───────┘
+             │
+             │ 14. USER INTERACTION
+             ▼
+    ┌─────────────────┐
+    │ User Click      │
+    │ pada Feature    │
+    └────────┬────────┘
+             │
+             │ 15. EVENT TRIGGERED
+             ▼
+    ┌─────────────────┐
+    │ Leaflet         │
+    │ mendeteksi click│
+    └────────┬────────┘
+             │
+             │ 16. GET POPUP CONTENT
+             ▼
+    ┌─────────────────┐
+    │ Ambil popup     │
+    │ yang sudah      │
+    │ di-bind         │
+    └────────┬────────┘
+             │
+             │ 17. RENDER POPUP
+             ▼
+    ┌─────────────────┐
+    │ ┌─────────────┐ │
+    │ │   POPUP     │ │
+    │ │             │ │
+    │ │ Nama: ...   │ │
+    │ │ Info: ...   │ │
+    │ │ [Data dari  │ │
+    │ │  properties]│ │
+    │ └─────────────┘ │
+    │                 │
+    │ Feature dengan  │
+    │ popup terbuka   │
+    └─────────────────┘

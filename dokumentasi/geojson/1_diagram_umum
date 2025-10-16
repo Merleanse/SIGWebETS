@@ -1,0 +1,100 @@
+┌─────────────────────────────────────────────────────────────────┐
+│                    PROSES WEBGIS DENGAN LEAFLET                 │
+└─────────────────────────────────────────────────────────────────┘
+
+   START
+     │
+     ▼
+┌─────────────────┐
+│  Load HTML      │ ← Buka halaman web di browser
+│  dengan Leaflet │
+└────────┬────────┘
+         │
+         ▼
+┌─────────────────┐
+│  Inisialisasi   │ ← var map = L.map('map').setView([...])
+│  Peta Leaflet   │
+└────────┬────────┘
+         │
+         ▼
+┌─────────────────┐
+│  Tambahkan      │ ← L.tileLayer(...).addTo(map)
+│  Basemap        │
+└────────┬────────┘
+         │
+         ▼
+┌─────────────────┐
+│  FETCH          │ ← fetch('data/file.geojson')
+│  GeoJSON        │
+└────────┬────────┘
+         │
+         ▼
+    ┌────────┐
+    │ Sukses?│────┐ TIDAK
+    └───┬────┘    │
+        │ YA      ▼
+        │    ┌─────────────┐
+        │    │ Error       │
+        │    │ Handler     │
+        │    └─────────────┘
+        │
+        ▼
+┌─────────────────┐
+│  Parse JSON     │ ← response.json()
+│  ke Object JS   │
+└────────┬────────┘
+         │
+         ▼
+┌─────────────────┐
+│  L.geoJSON()    │ ← Proses data GeoJSON
+│  Processing     │
+└────────┬────────┘
+         │
+         ├──────────────────────────────────┐
+         │                                  │
+         ▼                                  ▼
+┌─────────────────┐              ┌─────────────────┐
+│  style:         │              │  onEachFeature: │
+│  function()     │              │  function()     │
+│                 │              │                 │
+│  • Tentukan     │              │  • bindPopup()  │
+│    warna        │              │  • bindTooltip()│
+│  • Tentukan     │              │  • Event        │
+│    ketebalan    │              │    handlers     │
+│  • Tentukan     │              │                 │
+│    opacity      │              │                 │
+└────────┬────────┘              └────────┬────────┘
+         │                                │
+         └────────────┬───────────────────┘
+                      │
+                      ▼
+              ┌─────────────────┐
+              │  Layer siap     │
+              │  ditampilkan    │
+              └────────┬────────┘
+                       │
+                       ▼
+              ┌─────────────────┐
+              │  .addTo(map)    │ ← Tampilkan di peta
+              └────────┬────────┘
+                       │
+                       ▼
+              ┌─────────────────┐
+              │  USER INTERAKSI │
+              └────────┬────────┘
+                       │
+         ┌─────────────┼─────────────┐
+         │             │             │
+         ▼             ▼             ▼
+    ┌────────┐   ┌─────────┐   ┌────────┐
+    │ Click  │   │  Hover  │   │ Lainnya│
+    │ Feature│   │ Feature │   │        │
+    └───┬────┘   └────┬────┘   └────────┘
+        │             │
+        ▼             ▼
+  ┌──────────┐  ┌──────────┐
+  │ Show     │  │ Show     │
+  │ Popup    │  │ Tooltip  │
+  └──────────┘  └──────────┘
+
+   END

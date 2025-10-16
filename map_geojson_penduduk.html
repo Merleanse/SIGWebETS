@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Peta Penduduk Kecamatan DIY</title>
+    
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: Arial, sans-serif;
+        }
+        #map {
+            width: 100%;
+            height: 100vh;
+        }
+        .info-box {
+            padding: 6px 8px;
+            font: 14px/16px Arial, Helvetica, sans-serif;
+            background: white;
+            background: rgba(255,255,255,0.95);
+            box-shadow: 0 0 15px rgba(0,0,0,0.2);
+            border-radius: 5px;
+        }
+        .info-box h4 {
+            margin: 0 0 5px;
+            color: #777;
+        }
+        .popup-penduduk {
+            min-width: 280px;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        .popup-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 15px;
+            margin: -15px -15px 15px -15px;
+            border-radius: 5px 5px 0 0;
+        }
+        .popup-header h3 {
+            margin: 0;
+            font-size: 18px;
+        }
+        .popup-header p {
+            margin: 5px 0 0 0;
+            opacity: 0.9;
+            font-size: 13px;
+        }
+        .stat-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin: 15px 0;
+        }
+        .stat-item {
+            background: #f8f9fa;
+            padding: 10px;
+            border-radius: 5px;
+            text-align: center;
+        }
+        .stat-value {
+            font-size: 20px;
+            font-weight: bold;
+            color: #2c3e50;
+        }
+        .stat-label {
+            font-size: 11px;
+            color: #7f8c8d;
+            margin-top: 3px;
+        }
+        .info-detail {
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px solid #ecf0f1;
+        }
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 5px 0;
+        }
+        .info-label {
+            color: #7f8c8d;
+        }
+        .info-value {
+            font-weight: bold;
+            color: #2c3e50;
+        }
+    </style>
+</head>
+<body>
+    <div id="map"></div>
+    
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    
+    <script>
+        // Inisialisasi peta
+        var map = L.map('map').setView([-7.7956, 110.3695], 10);
+
+        // Basemap
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '© OpenStreetMap contributors',
+            maxZoom: 19
+        }).addTo(map);
+
+        // Fungsi untuk mendapatkan warna berdasarkan kepadatan penduduk
+        function getColorDensity(density) {
+            return density > 3000 ? '#800026' :
+                   density > 2500 ? '#BD0026' :
+                   density > 2000 ? '#E31A1C' :
+                   density > 1500 ? '#FC4E2A' :
+                   density > 1000 ? '#FD8D3C' :
+                   density > 500  ? '#FEB24C' :
+                   density > 200  ? '#FED976' :
+                                    '#FFEDA0';
+        }
+
+        // Fungsi untuk mendapatkan warna berdasarkan klasifikasi
+        function getColorClass(kelas) {
+            switch(kelas) {
+                case 'Sangat Tinggi': return '#800026';
+                case 'Tinggi': return '#E31A1C';
+                case 'Sedang': return '#FD8D3C';
+                case 'Rendah': return '#FED976';
+                default: return '#FFEDA0';
+            }
+        }
+
+        // Variable untuk layer yang akan digunakan
+        var pendudukLayer;
+
+        // Load data penduduk kecamatan
+        fetch('data/geojson_diy/penduduk_kecamatan_diy.geojson')
+            .then(response => response.json())
+            .then(data => {
+                pendudukLayer = L.geoJSON(data, {
+                    style: function(feature) {
+                        var props = feature.properties;
+                        return {
+                            fillColor: getColorDensity(props.KPDT_PDD),
+                            weight: 2,
+                            opacity: 1,
+                            color: 'white',
+                            dashArray: '3',
+                            fillOpacity: 0.7
+                        };
+                    },
+                    onEachFeature: function(feature, layer) {
+                        var props = feature.properties;
+                        
+                        // Hitung rasio gender
+                        var rasioGender = (props.LAKI_LAKI / props.PEREMPUAN * 100).toFixed(1);
+                        
+                        // Buat popup dengan desain modern
+                        var popupContent = 
+                            '<div class="popup-penduduk">' +
+                            '<div class="popup-header">' +
+                            '<h3>' + props.KECAMATAN + '</h3>' +
+                            '<p>Kabupaten ' + props.KABUPATEN + '</p>' +
+                            '</div>' +
+                            
+                            '<div class="stat-grid">' +
+                            '<div class="stat-item">' +
+                            '<div class="stat-value">' + props.JML_PDD.toLocaleString('id-ID') + '</div>' +
+                            '<div class="stat-label">Total Penduduk</div>' +
+                            '</div>' +
+                            '<div class="stat-item">' +
+                            '<div class="stat-value">' + props.KK.toLocaleString('id-ID') + '</div>' +
+                            '<div class="stat-label">Kepala Keluarga</div>' +
+                            '</div>' +
+                            '<div class="stat-item">' +
+                            '<div class="stat-value">' + props.LAKI_LAKI.toLocaleString('id-ID') + '</div>' +
+                            '<div class="stat-label">👨 Laki-laki</div>' +
+                            '</div>' +
+                            '<div class="stat-item">' +
+                            '<div class="stat-value">' + props.PEREMPUAN.toLocaleString('id-ID') + '</div>' +
+                            '<div class="stat-label">👩 Perempuan</div>' +
+                            '</div>' +
+                            '</div>' +
+                            
+                            '<div class="info-detail">' +
+                            '<div class="info-row">' +
+                            '<span class="info-label">📏 Luas Wilayah</span>' +
+                            '<span class="info-value">' + props.Luas_km2.toFixed(2) + ' km²</span>' +
+                            '</div>' +
+                            '<div class="info-row">' +
+                            '<span class="info-label">📊 Kepadatan</span>' +
+                            '<span class="info-value">' + props.KPDT_PDD.toLocaleString('id-ID') + ' jiwa/km²</span>' +
+                            '</div>' +
+                            '<div class="info-row">' +
+                            '<span class="info-label">👥 Rasio Gender</span>' +
+                            '<span class="info-value">' + rasioGender + ' : 100</span>' +
+                            '</div>' +
+                            '<div class="info-row">' +
+                            '<span class="info-label">🏷️ Klasifikasi</span>' +
+                            '<span class="info-value">' + props.klas_kpdt + '</span>' +
+                            '</div>' +
+                            '</div>' +
+                            '</div>';
+                        
+                        layer.bindPopup(popupContent, {
+                            maxWidth: 320
+                        });
+                        
+                        // Tooltip singkat
+                        layer.bindTooltip(
+                            '<strong>' + props.KECAMATAN + '</strong><br>' +
+                            'Penduduk: ' + props.JML_PDD.toLocaleString('id-ID') + ' jiwa<br>' +
+                            'Kepadatan: ' + props.KPDT_PDD.toLocaleString('id-ID') + ' jiwa/km²',
+                            {
+                                permanent: false,
+                                direction: 'top'
+                            }
+                        );
+                        
+                        // Highlight saat hover
+                        layer.on('mouseover', function(e) {
+                            this.setStyle({
+                                weight: 4,
+                                color: '#666',
+                                dashArray: '',
+                                fillOpacity: 0.9
+                            });
+                            
+                            if (!L.Browser.ie && !L.Browser.opera && !L.Browser.edge) {
+                                this.bringToFront();
+                            }
+                            
+                            // Update info panel
+                            info.update(props);
+                        });
+                        
+                        layer.on('mouseout', function(e) {
+                            pendudukLayer.resetStyle(this);
+                            info.update();
+                        });
+                        
+                        layer.on('click', function(e) {
+                            map.fitBounds(e.target.getBounds());
+                        });
+                    }
+                }).addTo(map);
+                
+                map.fitBounds(pendudukLayer.getBounds());
+            })
+            .catch(error => {
+                console.error('Error loading penduduk data:', error);
+                alert('Gagal memuat data penduduk!');
+            });
+
+        // Info box yang muncul saat hover
+        var info = L.control({position: 'topright'});
+
+        info.onAdd = function(map) {
+            this._div = L.DomUtil.create('div', 'info-box');
+            this.update();
+            return this._div;
+        };
+
+        info.update = function(props) {
+            this._div.innerHTML = '<h4>Penduduk Kecamatan DIY</h4>' + 
+                (props ?
+                '<b>' + props.KECAMATAN + ', ' + props.KABUPATEN + '</b><br/>' +
+                'Penduduk: <b>' + props.JML_PDD.toLocaleString('id-ID') + '</b> jiwa<br/>' +
+                'Kepadatan: <b>' + props.KPDT_PDD.toLocaleString('id-ID') + '</b> jiwa/km²<br/>' +
+                'Klasifikasi: <b>' + props.klas_kpdt + '</b>'
+                : 'Arahkan mouse ke wilayah');
+        };
+
+        info.addTo(map);
+
+        // Legend
+        var legend = L.control({position: 'bottomright'});
+
+        legend.onAdd = function(map) {
+            var div = L.DomUtil.create('div', 'info-box');
+            var grades = [0, 200, 500, 1000, 1500, 2000, 2500, 3000];
+            var labels = [];
+
+            div.innerHTML = '<h4>Kepadatan Penduduk<br>(jiwa/km²)</h4>';
+
+            for (var i = 0; i < grades.length; i++) {
+                div.innerHTML +=
+                    '<i style="background:' + getColorDensity(grades[i] + 1) + 
+                    '; width: 18px; height: 18px; display: inline-block; opacity: 0.7; margin-right: 5px;"></i> ' +
+                    grades[i] + (grades[i + 1] ? '&ndash;' + grades[i + 1] + '<br>' : '+');
+            }
+
+            return div;
+        };
+
+        legend.addTo(map);
+    </script>
+</body>
+</html>

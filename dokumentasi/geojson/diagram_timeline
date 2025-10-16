@@ -1,0 +1,65 @@
+┌────────────────────────────────────────────────────────────────┐
+│                  TIMELINE OF EVENTS                            │
+└────────────────────────────────────────────────────────────────┘
+
+TIME →
+
+T0: Page Load
+│   ├─ HTML parsed
+│   ├─ CSS loaded
+│   └─ JavaScript executed
+│
+T1: Map Initialization
+│   └─ L.map('map').setView(...)
+│
+T2: Basemap Added
+│   └─ L.tileLayer(...).addTo(map)
+│
+T3: Fetch Started
+│   └─ fetch('data/file.geojson')
+│
+│   [Network Request Time: 100-500ms]
+│
+T4: Response Received
+│   └─ response.json()
+│
+│   [Parse Time: 10-100ms]
+│
+T5: Data Ready
+│   └─ data object available
+│
+T6: GeoJSON Processing Started
+│   └─ L.geoJSON(data, {...})
+│
+│   [Processing Time: 50-500ms]
+│   ├─ Loop features
+│   ├─ Create layers
+│   ├─ Apply styles
+│   └─ Bind popups
+│
+T7: Layers Added to Map
+│   └─ .addTo(map)
+│
+│   [Render Time: 50-200ms]
+│
+T8: Map Fully Rendered
+│   └─ User can see the map
+│
+│   [User Interaction]
+│
+T9: User Clicks Feature
+│   └─ Click event
+│
+│   [Instant: <10ms]
+│
+T10: Popup Shown
+│   └─ Popup visible
+│
+│   [Animation: 200-300ms]
+│
+T11: Popup Fully Visible
+│   └─ User can interact
+│
+
+Total Time (T0 → T8): ~200ms - 1500ms
+(depends on file size, network, device)

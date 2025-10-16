@@ -1,0 +1,121 @@
+┌────────────────────────────────────────────────────────────────┐
+│           PROSES L.geoJSON() DAN RENDERING                     │
+└────────────────────────────────────────────────────────────────┘
+
+   Data GeoJSON
+        │
+        ▼
+   ┌──────────────────────┐
+   │ L.geoJSON(data, {    │
+   │   style: ...,        │ ← Konfigurasi
+   │   onEachFeature: ... │
+   │ })                   │
+   └──────────┬───────────┘
+              │
+              ▼
+   ┌──────────────────────┐
+   │ Leaflet membaca      │
+   │ structure GeoJSON:   │
+   │                      │
+   │ • type               │
+   │ • features []        │
+   │ • geometry           │
+   │ • properties         │
+   └──────────┬───────────┘
+              │
+              ▼
+   ┌──────────────────────┐
+   │ Loop setiap feature  │ ← forEach feature in features
+   │ dalam features array │
+   └──────────┬───────────┘
+              │
+              ▼
+   ┌──────────────────────┐
+   │ Cek geometry.type    │
+   └──────────┬───────────┘
+              │
+    ┌─────────┼─────────┬─────────┐
+    │         │         │         │
+    ▼         ▼         ▼         ▼
+┌────────┐┌────────┐┌────────┐┌────────┐
+│ Point  ││LineStri││Polygon ││Multi*  │
+└───┬────┘└───┬────┘└───┬────┘└───┬────┘
+    │         │         │         │
+    ▼         ▼         ▼         ▼
+┌────────┐┌────────┐┌────────┐┌────────┐
+│L.marker││L.polyLi││L.polygo││Multiple│
+│        ││ne      ││n       ││layers  │
+└───┬────┘└───┬────┘└───┬────┘└───┬────┘
+    │         │         │         │
+    └─────────┴─────────┴─────────┘
+              │
+              ▼
+   ┌──────────────────────┐
+   │ style: function()    │
+   │ dipanggil            │
+   │                      │
+   │ Return:              │
+   │ • color              │
+   │ • weight             │
+   │ • fillColor          │
+   │ • fillOpacity        │
+   │ • dll                │
+   └──────────┬───────────┘
+              │
+              ▼
+   ┌──────────────────────┐
+   │ Apply style ke       │
+   │ layer yang dibuat    │
+   └──────────┬───────────┘
+              │
+              ▼
+   ┌──────────────────────┐
+   │ onEachFeature:       │
+   │ function() dipanggil │
+   │                      │
+   │ Parameter:           │
+   │ • feature (data)     │
+   │ • layer (visual)     │
+   └──────────┬───────────┘
+              │
+              ▼
+   ┌──────────────────────┐
+   │ Dalam onEachFeature: │
+   │                      │
+   │ 1. bindPopup()       │
+   │ 2. bindTooltip()     │
+   │ 3. Event listeners   │
+   │    - click           │
+   │    - mouseover       │
+   │    - mouseout        │
+   └──────────┬───────────┘
+              │
+              ▼
+   ┌──────────────────────┐
+   │ Layer siap dengan:   │
+   │ • Geometri           │
+   │ • Style              │
+   │ • Popup              │
+   │ • Tooltip            │
+   │ • Events             │
+   └──────────┬───────────┘
+              │
+              ▼
+   ┌──────────────────────┐
+   │ Ulangi untuk feature │
+   │ berikutnya           │
+   └──────────┬───────────┘
+              │
+              ▼
+   ┌──────────────────────┐
+   │ Semua feature sudah  │
+   │ diproses             │
+   └──────────┬───────────┘
+              │
+              ▼
+   ┌──────────────────────┐
+   │ .addTo(map)          │
+   │                      │
+   │ Tampilkan semua      │
+   │ layer ke peta        │
+   └──────────────────────┘

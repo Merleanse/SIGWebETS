@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Filter dengan Dropdown</title>
+    
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: Arial, sans-serif;
+        }
+        #map {
+            width: 100%;
+            height: 100vh;
+        }
+        
+        .filter-panel {
+            position: absolute;
+            top: 10px;
+            left: 60px;
+            z-index: 1000;
+            background: white;
+            padding: 15px;
+            border-radius: 5px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+        }
+        
+        .filter-panel h4 {
+            margin: 0 0 10px 0;
+            color: #333;
+            font-size: 16px;
+        }
+        
+        .filter-panel select {
+            width: 200px;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 3px;
+            font-size: 14px;
+            margin-bottom: 10px;
+        }
+        
+        .info-text {
+            font-size: 12px;
+            color: #666;
+            margin-top: 5px;
+        }
+    </style>
+</head>
+<body>
+    <!-- FILTER PANEL -->
+    <div class="filter-panel">
+        <h4>🔍 Filter Penduduk</h4>
+        
+        <!-- Dropdown Kabupaten -->
+        <label>Kabupaten:</label><br>
+        <select id="filterKabupaten" onchange="applyFilter()">
+            <option value="">-- Semua Kabupaten --</option>
+            <option value="Bantul">Bantul</option>
+            <option value="Gunungkidul">Gunungkidul</option>
+            <option value="Kulon Progo">Kulon Progo</option>
+            <option value="Sleman">Sleman</option>
+            <option value="Yogyakarta">Yogyakarta</option>
+        </select>
+        
+        <br><br>
+        
+        <!-- Dropdown Klasifikasi -->
+        <label>Klasifikasi Kepadatan:</label><br>
+        <select id="filterKlasifikasi" onchange="applyFilter()">
+            <option value="">-- Semua Klasifikasi --</option>
+            <option value="Sangat Tinggi">Sangat Tinggi</option>
+            <option value="Tinggi">Tinggi</option>
+            <option value="Sedang">Sedang</option>
+            <option value="Rendah">Rendah</option>
+        </select>
+        
+        <br>
+        <div class="info-text" id="infoJumlah">
+            Menampilkan semua kecamatan
+        </div>
+    </div>
+    
+    <div id="map"></div>
+    
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    
+    <script>
+        // ========================================
+        // INISIALISASI PETA
+        // ========================================
+        var map = L.map('map').setView([-7.7956, 110.3695], 10);
+
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '© OpenStreetMap contributors'
+        }).addTo(map);
+
+        // ========================================
+        // VARIABLE GLOBAL
+        // ========================================
+        var layerPenduduk;
+        var dataPenduduk;
+
+        // ========================================
+        // FUNGSI WARNA
+        // ========================================
+        function getColorDensity(density) {
+            return density > 3000 ? '#800026' :
+                   density > 2500 ? '#BD0026' :
+                   density > 2000 ? '#E31A1C' :
+                   density > 1500 ? '#FC4E2A' :
+                   density > 1000 ? '#FD8D3C' :
+                   density > 500  ? '#FEB24C' :
+                   density > 200  ? '#FED976' :
+                                    '#FFEDA0';
+        }
+
+        // ========================================
+        // FUNGSI MEMBUAT LAYER
+        // ========================================
+        function buatLayerPenduduk(data, filterKab, filterKlas) {
+            return L.geoJSON(data, {
+                filter: function(feature) {
+                    var props = feature.properties;
+                    
+                    // Cek filter kabupaten
+                    var lolosKabupaten = true;
+                    if (filterKab !== '') {
+                        lolosKabupaten = (props.KABUPATEN === filterKab);
+                    }
+                    
+                    // Cek filter klasifikasi
+                    var lolosKlasifikasi = true;
+                    if (filterKlas !== '') {
+                        lolosKlasifikasi = (props.klas_kpdt === filterKlas);
+                    }
+                    
+                    // Tampilkan hanya jika lolos semua filter
+                    return lolosKabupaten && lolosKlasifikasi;
+                },
+                
+                style: function(feature) {
+                    return {
+                        fillColor: getColorDensity(feature.properties.KPDT_PDD),
+                        weight: 2,
+                        opacity: 1,
+                        color: 'white',
+                        fillOpacity: 0.7
+                    };
+                },
+                
+                onEachFeature: function(feature, layer) {
+                    var props = feature.properties;
+                    
+                    var popup = 
+                        '<h3>' + props.KECAMATAN + '</h3>' +
+                        '<p><strong>Kabupaten:</strong> ' + props.KABUPATEN + '</p>' +
+                        '<p><strong>Penduduk:</strong> ' + props.JML_PDD.toLocaleString('id-ID') + ' jiwa</p>' +
+                        '<p><strong>Kepadatan:</strong> ' + props.KPDT_PDD.toLocaleString('id-ID') + ' jiwa/km²</p>' +
+                        '<p><strong>Klasifikasi:</strong> ' + props.klas_kpdt + '</p>';
+                    
+                    layer.bindPopup(popup);
+                    layer.bindTooltip(props.KECAMATAN);
+                    
+                    // Highlight
+                    layer.on('mouseover', function(e) {
+                        this.setStyle({
+                            weight: 4,
+                            color: '#666',
+                            fillOpacity: 0.9
+                        });
+                    });
+                    
+                    layer.on('mouseout', function(e) {
+                        layerPenduduk.resetStyle(this);
+                    });
+                }
+            });
+        }
+
+        // ========================================
+        // LOAD DATA
+        // ========================================
+        fetch('data/geojson_diy/penduduk_kecamatan_diy.geojson')
+            .then(response => response.json())
+            .then(data => {
+                dataPenduduk = data;
+                layerPenduduk = buatLayerPenduduk(data, '', '');
+                layerPenduduk.addTo(map);
+                
+                updateInfoJumlah();
+            })
+            .catch(error => console.error('Error:', error));
+
+        // ========================================
+        // FUNGSI APPLY FILTER
+        // ========================================
+        function applyFilter() {
+            // Ambil nilai dari dropdown
+            var filterKab = document.getElementById('filterKabupaten').value;
+            var filterKlas = document.getElementById('filterKlasifikasi').value;
+            
+            console.log('Filter Kabupaten:', filterKab);
+            console.log('Filter Klasifikasi:', filterKlas);
+            
+            // Hapus layer lama
+            if (layerPenduduk) {
+                map.removeLayer(layerPenduduk);
+            }
+            
+            // Buat layer baru dengan filter
+            layerPenduduk = buatLayerPenduduk(dataPenduduk, filterKab, filterKlas);
+            layerPenduduk.addTo(map);
+            
+            // Update info jumlah
+            updateInfoJumlah();
+            
+            // Zoom ke extent layer yang ditampilkan
+            if (layerPenduduk.getLayers().length > 0) {
+                map.fitBounds(layerPenduduk.getBounds());
+            }
+        }
+
+        // ========================================
+        // FUNGSI UPDATE INFO JUMLAH
+        // ========================================
+        function updateInfoJumlah() {
+            var jumlah = 0;
+            
+            if (layerPenduduk) {
+                layerPenduduk.eachLayer(function() {
+                    jumlah++;
+                });
+            }
+            
+            var infoText = 'Menampilkan ' + jumlah + ' kecamatan';
+            
+            var filterKab = document.getElementById('filterKabupaten').value;
+            var filterKlas = document.getElementById('filterKlasifikasi').value;
+            
+            if (filterKab || filterKlas) {
+                infoText += ' (terfilter)';
+            }
+            
+            document.getElementById('infoJumlah').textContent = infoText;
+        }
+
+    </script>
+</body>
+</html>

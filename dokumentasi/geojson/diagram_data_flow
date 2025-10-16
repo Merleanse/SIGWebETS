@@ -1,0 +1,92 @@
+┌────────────────────────────────────────────────────────────────┐
+│                     DATA FLOW DIAGRAM                          │
+└────────────────────────────────────────────────────────────────┘
+
+FILE: penduduk_kecamatan_diy.geojson
+│
+├─ type: "FeatureCollection"
+├─ features: [
+│   ├─ [0] {
+│   │   ├─ type: "Feature"
+│   │   ├─ geometry: {
+│   │   │   ├─ type: "MultiPolygon"
+│   │   │   └─ coordinates: [[[[...]]]]]
+│   │   │   }
+│   │   └─ properties: {
+│   │       ├─ KABUPATEN: "Bantul"
+│   │       ├─ KECAMATAN: "Bambanglipuro"
+│   │       ├─ LAKI_LAKI: 18560
+│   │       ├─ PEREMPUAN: 19012
+│   │       ├─ KK: 12485
+│   │       ├─ Luas_km2: 23.46298
+│   │       ├─ JML_PDD: 37572
+│   │       ├─ KPDT_PDD: 1601
+│   │       └─ klas_kpdt: "Rendah"
+│   │       }
+│   │   }
+│   ├─ [1] { ... }
+│   └─ [2] { ... }
+│   ]
+│
+│ 1. FETCH
+▼
+response (HTTP Response Object)
+│
+│ 2. PARSE (.json())
+▼
+data (JavaScript Object)
+{
+  type: "FeatureCollection",
+  features: Array(50)
+}
+│
+│ 3. L.geoJSON(data, {...})
+▼
+Loop: features.forEach()
+│
+├─ Iteration 1: feature[0]
+│   │
+│   ├─ geometry → L.polygon()
+│   │   └─ Buat layer polygon
+│   │
+│   ├─ style() → {color, fillColor, ...}
+│   │   └─ Apply ke layer
+│   │
+│   └─ onEachFeature(feature[0], layer)
+│       │
+│       ├─ feature.properties → props
+│       │   └─ props.KECAMATAN = "Bambanglipuro"
+│       │   └─ props.JML_PDD = 37572
+│       │
+│       ├─ Buat popup HTML:
+│       │   popup = '<h3>' + props.KECAMATAN + '</h3>' +
+│       │           '<p>Penduduk: ' + props.JML_PDD + '</p>'
+│       │
+│       └─ layer.bindPopup(popup)
+│           └─ Popup tersimpan di layer
+│
+├─ Iteration 2: feature[1]
+│   └─ ... (sama dengan iteration 1)
+│
+└─ Iteration N: feature[N]
+    └─ ...
+│
+│ 4. .addTo(map)
+▼
+Semua layer ditampilkan di peta
+│
+│ 5. USER CLICK pada layer[0]
+▼
+Event 'click' triggered
+│
+│ 6. Leaflet ambil popup dari layer[0]
+▼
+popup = '<h3>Bambanglipuro</h3><p>Penduduk: 37572</p>'
+│
+│ 7. Render popup
+▼
+┌─────────────────────┐
+│ Bambanglipuro       │
+│ Penduduk: 37572     │
+└─────────────────────┘
+Popup muncul di peta

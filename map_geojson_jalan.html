@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="id">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Peta Jalan Utama DIY</title>
+
+    <link
+      rel="stylesheet"
+      href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+    />
+
+    <style>
+      body {
+        margin: 0;
+        padding: 0;
+        font-family: Arial, sans-serif;
+      }
+      #map {
+        width: 100%;
+        height: 100vh;
+      }
+      
+    </style>
+  </head>
+  <body>
+    <div id="map"></div>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+    <script>
+      // Inisialisasi peta
+      var map = L.map("map").setView([-7.7956, 110.3695], 10);
+
+      // Basemap
+      L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+        attribution: "© OpenStreetMap contributors",
+        maxZoom: 19,
+      }).addTo(map);
+
+      // Fungsi warna berdasarkan jenis jalan
+      function getJalanColor(keterangan) {
+        switch (keterangan) {
+          case "Jalan Kolektor":
+            return "#e74c3c";
+          case "Jalan Arteri":
+            return "#f39c12";
+          case "Jalan Lokal":
+            return "#3498db";
+          default:
+            return "#95a5a6";
+        }
+      }
+
+      // Fungsi ketebalan garis
+      function getJalanWeight(keterangan) {
+        switch (keterangan) {
+          case "Jalan Arteri":
+            return 5;
+          case "Jalan Kolektor":
+            return 3;
+          case "Jalan Lokal":
+            return 2;
+          default:
+            return 2;
+        }
+      }
+
+      // Load GeoJSON
+      fetch("data/geojson_diy/jalan_utama_diy.geojson")
+        .then((response) => {
+          if (!response.ok) {
+            throw new Error("Gagal memuat data");
+          }
+          return response.json();
+        })
+        .then((data) => {
+          var jalanLayer = L.geoJSON(data, {
+            style: function (feature) {
+              return {
+                color: getJalanColor(feature.properties.KETERANGAN),
+                weight: getJalanWeight(feature.properties.KETERANGAN),
+                opacity: 0.8,
+                lineCap: "round",
+                lineJoin: "round",
+              };
+            },
+            onEachFeature: function (feature, layer) {
+              var props = feature.properties;
+
+              // Popup
+              var popupContent =
+                "<h3>Informasi Jalan</h3>" +
+                "<p><b>Jenis :</b>" + props.KETERANGAN + "</p>" +
+                "<p><b>Panjang :</b>" + props.PANJANG_KM.toFixed(2) + " km</p>";
+
+              layer.bindPopup(popupContent);
+
+              // Tooltip
+              layer.bindTooltip(
+                props.KETERANGAN + " (" + props.PANJANG_KM.toFixed(2) + " km)",
+                { sticky: true }
+              );
+
+              // Event hover
+              layer.on("mouseover", function (e) {
+                this.setStyle({
+                  weight: getJalanWeight(props.KETERANGAN) + 2,
+                  opacity: 1,
+                });
+              });
+
+              layer.on("mouseout", function (e) {
+                jalanLayer.resetStyle(this);
+              });
+            },
+          }).addTo(map);
+
+          // Zoom ke layer
+          map.fitBounds(jalanLayer.getBounds());
+
+          console.log("Data jalan berhasil dimuat!");
+        })
+        .catch((error) => {
+          console.error("Error:", error);
+          alert("Gagal memuat data jalan!");
+        });
+
+      // Load data sungai
+      fetch("data/geojson_diy/sungai_besar_diy.geojson")
+        .then((response) => response.json())
+        .then((data) => {
+          var sungaiLayer = L.geoJSON(data, {
+            style: {
+              fillColor: "#3498db",
+              weight: 2,
+              opacity: 1,
+              color: "#2980b9",
+              fillOpacity: 0.6,
+            },
+            onEachFeature: function (feature, layer) {
+              var props = feature.properties;
+
+              // Popup sederhana untuk sungai
+              var popupContent =
+                '<div style="padding: 10px;">' +
+                '<h3 style="margin: 0 0 10px 0; color: #2980b9;">💧 ' +
+                props.KETERANGAN +
+                "</h3>" +
+                '<p style="margin: 0; color: #7f8c8d;">ID: ' +
+                props.OBJECTID +
+                "</p>" +
+                "</div>";
+
+              layer.bindPopup(popupContent);
+
+              // Tooltip
+              layer.bindTooltip(props.KETERANGAN, {
+                permanent: false,
+                direction: "center",
+              });
+            },
+          }).addTo(map);
+        })
+        .catch((error) => {
+          console.error("Error loading sungai data:", error);
+        });
+
+      // Legend
+      var legend = L.control({ position: "bottomright" });
+
+      legend.onAdd = function (map) {
+        var div = L.DomUtil.create("div", "legend");
+
+        div.style.background = "white";
+        div.style.padding = "10px";
+        div.style.borderRadius = "5px";
+        div.style.boxShadow = "0 2px 5px rgba(0,0,0,0.2)";
+
+        div.innerHTML = '<h4 style="margin: 0 0 10px 0;">Legenda Jalan</h4>';
+
+        var categories = [
+          { name: "Jalan Arteri", color: "#f39c12" },
+          { name: "Jalan Kolektor", color: "#e74c3c" },
+          { name: "Jalan Lokal", color: "#3498db" },
+        ];
+
+        for (var i = 0; i < categories.length; i++) {
+          div.innerHTML +=
+            '<div style="margin: 5px 0;">' +
+            '<span style="display: inline-block; width: 30px; height: 3px; background-color:' +
+            categories[i].color +
+            '; margin-right: 5px;"></span>' +
+            "<span>" +
+            categories[i].name +
+            "</span>" +
+            "</div>";
+        }
+
+        return div;
+      };
+
+      legend.addTo(map);
+    </script>
+  </body>
+</html>
