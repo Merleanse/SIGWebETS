@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <!-- Metadata -->
+    <meta charset="utf-8" />
+    <meta
+      name="viewport"
+      content="initial-scale=1,user-scalable=no,maximum-scale=1,width=device-width"
+    />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+
+    <!-- Judul pada tab browser -->
+    <title>LeafletJS</title>
+
+    <!-- Leaflet CSS Library -->
+    <link
+      rel="stylesheet"
+      href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css"
+    />
+
+    <!-- Style untuk tampilan peta fullscreen -->
+    <style>
+       body {
+            margin: 0;
+            padding: 0;
+            font-family: Arial, sans-serif;
+        }
+        #map {
+            width: 100%;
+            height: 100vh;
+        }
+    </style>
+  </head>
+
+  <body>
+    <!-- Leaflet JavaScript Library -->
+    <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+    <!-- HTML Block untuk menampilkan peta -->
+    <div id="map"></div>
+    <script>
+      /* Initial Map */
+      var map = L.map("map").setView(
+        [-7.799333634363571, 110.37554219432286],
+        10
+      ); //lat, long, zoom
+
+      /* Tile Basemap */
+      var basemap = L.tileLayer(
+        "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
+        {
+          //attribution akan muncul di pojok kanan bawah
+          attribution:
+            '<a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> | <a href="https://www.unsorry.net" target="_blank">unsorry@2022</a>',
+        }
+      );
+
+      var GoogleStreets = L.tileLayer(
+        "https://{s}.google.com/vt/lyrs=m&x={x}&y={y}&z={z}",
+        {
+          maxZoom: 20,
+          subdomains: ["mt0", "mt1", "mt2", "mt3"],
+          attribution: "Google Streets",
+        }
+      );
+
+      // Layer Control
+      var baseMaps = {
+        "Google Streets": GoogleStreets,
+        "OpenStreetMap": basemap,
+      };
+
+      L.control.layers(baseMaps).addTo(map);
+
+      var greenIcon = L.icon({
+        iconUrl: "assets/img/leaf-green.png",
+        shadowUrl: "assets/img/leaf-shadow.png",
+        iconSize: [25, 41],
+        iconAnchor: [12, 41],
+        popupAnchor: [1, -34],
+        shadowSize: [41, 41],
+      });
+
+      var marker = L.marker([-7.798653446376645, 110.37279451602171], {
+        icon: greenIcon,
+      }).addTo(map);
+
+      var leafIcon = L.Icon.extend({
+        options: {
+          shadowUrl: "assets/img/leaf-shadow.png",
+          iconSize: [38, 95],
+          shadowSize: [50, 64],
+          iconAnchor: [22, 94],
+          shadowAnchor: [4, 62],
+          popupAnchor: [-3, -76],
+        },
+      });
+
+      var greenIcon = new leafIcon({ iconUrl: "assets/img/leaf-green.png" }),
+        redIcon = new leafIcon({ iconUrl: "assets/img/leaf-red.png" }),
+        orangeIcon = new leafIcon({ iconUrl: "assets/img/leaf-orange.png" });
+
+      L.marker([-7.799333634363571, 110.37554219432286], {icon: greenIcon}).addTo(map);
+      L.marker([-7.781333634363571, 110.37554219432286], {icon: redIcon}).addTo(map);
+      L.marker([-7.779333634363571, 110.39554219432286], {icon: orangeIcon}).addTo(map);
+
+      
+    </script>
+  </body>
+</html>
